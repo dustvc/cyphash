@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "./lib/firebase";
 import { fetchCryptoPrice } from "./lib/indodax";
 import { useRouter } from "next/navigation";
@@ -17,52 +17,77 @@ function convertToRupiah(number) {
 
 export default function Home() {
   const [cryptoData, setCryptoData] = useState([]);
+  const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
   const [investment, setInvestment] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+      if (user) {
+        setUser(user);
+        fetchData(user.uid);
+        setLoading(false);
+      } else {
         router.push("/login");
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const fetchData = async () => {
-    const querySnapshot = await getDocs(collection(db, "cryptos"));
+  const fetchData = async (uid) => {
+    const q = query(collection(db, "cryptos"), where("uid", "==", uid));
+    const querySnapshot = await getDocs(q);
     const data = querySnapshot.docs.map((doc) => doc.data());
     setCryptoData(data);
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleAddCrypto = async (e) => {
     e.preventDefault();
     const numCoins = investment / buyPrice;
     await addDoc(collection(db, "cryptos"), {
+      title,
       code,
       buyPrice,
       investment,
       numCoins,
+      uid: user.uid,
     });
-    fetchData();
+    fetchData(user.uid);
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">CYPHASH 🐒</h1>
       <button
         className="bg-red-500 text-white px-4 py-2 rounded mb-4"
-        onClick={() => signOut(auth)}
+        onClick={() => {
+          signOut(auth);
+          router.push("/login");
+        }}
       >
         Logout
       </button>
       <form onSubmit={handleAddCrypto} className="mb-4">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Judul"
+          required
+          className="border p-2 mr-2 text-black"
+        />
         <input
           type="text"
           value={code}
@@ -120,7 +145,8 @@ function CryptoCard({ crypto }) {
   return (
     crypto && (
       <div className="border p-4 rounded shadow">
-        <div className="text-xl font-bold">{crypto.code.toUpperCase()}</div>
+        <div className="text-xl font-bold">{crypto.title}</div>
+        <div className="text-lg font-semibold">{crypto.code.toUpperCase()}</div>
         <div className="text-gray-600">Jumlah Koin: {crypto.numCoins}</div>
         <div className="text-gray-600">
           Harga Koin: {convertToRupiah(crypto.buyPrice)}
