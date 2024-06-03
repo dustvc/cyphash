@@ -55,7 +55,7 @@ export default function Home() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Crypto Profit Tracker</h1>
+      <h1 className="text-2xl font-bold mb-4">CYPHASH 🐒</h1>
       <button
         className="bg-red-500 text-white px-4 py-2 rounded mb-4"
         onClick={() => signOut(auth)}
@@ -67,7 +67,7 @@ export default function Home() {
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Code"
+          placeholder="Kode Crypto"
           required
           className="border p-2 mr-2 text-black uppercase"
         />
@@ -75,7 +75,7 @@ export default function Home() {
           type="number"
           value={buyPrice}
           onChange={(e) => setBuyPrice(e.target.value)}
-          placeholder="Buy Price"
+          placeholder="Harga Beli"
           required
           className="border p-2 mr-2 text-black"
         />
@@ -83,7 +83,7 @@ export default function Home() {
           type="number"
           value={investment}
           onChange={(e) => setInvestment(e.target.value)}
-          placeholder="Total Investment"
+          placeholder="Total Investasi"
           required
           className="border p-2 mr-2 text-black"
         />
