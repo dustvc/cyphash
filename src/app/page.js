@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  query,
+  where,
+  doc,
+} from "firebase/firestore";
 import { db, auth } from "./lib/firebase";
 import { fetchCryptoPrice } from "./lib/indodax";
 import { useRouter } from "next/navigation";
@@ -41,7 +49,10 @@ export default function Home() {
   const fetchData = async (uid) => {
     const q = query(collection(db, "cryptos"), where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
-    const data = querySnapshot.docs.map((doc) => doc.data());
+    const data = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     setCryptoData(data);
   };
 
@@ -56,6 +67,11 @@ export default function Home() {
       numCoins,
       uid: user.uid,
     });
+    fetchData(user.uid);
+  };
+
+  const handleRemoveCrypto = async (id) => {
+    await deleteDoc(doc(db, "cryptos", id));
     fetchData(user.uid);
   };
 
@@ -120,15 +136,19 @@ export default function Home() {
         </button>
       </form>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cryptoData.map((crypto, index) => (
-          <CryptoCard key={index} crypto={crypto} />
+        {cryptoData.map((crypto) => (
+          <CryptoCard
+            key={crypto.id}
+            crypto={crypto}
+            onRemove={handleRemoveCrypto}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function CryptoCard({ crypto }) {
+function CryptoCard({ crypto, onRemove }) {
   const [currentPrice, setCurrentPrice] = useState(null);
   const [profit, setProfit] = useState(null);
 
@@ -145,14 +165,18 @@ function CryptoCard({ crypto }) {
   return (
     crypto && (
       <div className="border p-4 rounded shadow">
-        <div className="text-xl font-bold">{crypto.title}</div>
-        <div className="text-lg font-semibold">{crypto.code.toUpperCase()}</div>
-        <div className="text-gray-600">Jumlah Koin: {crypto.numCoins}</div>
-        <div className="text-gray-600">
+        <div className="justify-between flex">
+          <div className="text-lg font-bold">{crypto.title}</div>
+          <div className="text-lg font-regular">
+            ({crypto.code.toUpperCase()})
+          </div>
+        </div>
+        <div className="text-gray-400">Jumlah Koin: {crypto.numCoins}</div>
+        <div className="text-gray-400">
           Harga Koin: {convertToRupiah(crypto.buyPrice)}
         </div>
         {currentPrice && (
-          <div className="text-gray-600">
+          <div className="text-gray-400">
             Harga Sekarang: {convertToRupiah(currentPrice)}
           </div>
         )}
@@ -166,6 +190,12 @@ function CryptoCard({ crypto }) {
             {convertToRupiah(profit.toFixed(2))} {profit >= 0 ? "🚀" : "📉"}
           </div>
         )}
+        <button
+          onClick={() => onRemove(crypto.id)}
+          className="mt-2 bg-red-500 text-white px-4 py-2 rounded"
+        >
+          Hapus
+        </button>
       </div>
     )
   );
