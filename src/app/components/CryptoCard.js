@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchCryptoPrice } from "../lib/indodax";
 import { convertToRupiah } from "../utils/convertToRupiah";
 import AlarmModal from "./AlarmModal";
-import AlarmSound from "./AlarmSound";
 
 export default function CryptoCard({
   crypto,
@@ -13,7 +12,8 @@ export default function CryptoCard({
   const [currentPrice, setCurrentPrice] = useState(null);
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
-  const { playAlarm } = AlarmSound();
+  const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -24,11 +24,8 @@ export default function CryptoCard({
 
       // Check if the current price has reached the target price
       if (crypto.targetPrice && price >= crypto.targetPrice) {
-        playAlarm();
-        alert(
-          `Target price reached for ${crypto.title}: ${convertToRupiah(price)}`
-        );
-        onRemoveTarget(crypto.id); // Turn off the alarm
+        setIsAlarmActive(true);
+        audioRef.current.play();
       }
     };
 
@@ -36,7 +33,14 @@ export default function CryptoCard({
     const interval = setInterval(fetchPrice, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, [crypto, onRemoveTarget, playAlarm]);
+  }, [crypto, onRemoveTarget]);
+
+  const handleStopAlarm = () => {
+    setIsAlarmActive(false);
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0; // Reset the audio playback to the beginning
+    onRemoveTarget(crypto.id); // Turn off the alarm
+  };
 
   const handleSetAlarm = (targetPrice) => {
     onUpdateTarget(crypto.id, targetPrice);
@@ -97,12 +101,23 @@ export default function CryptoCard({
           Hapus
         </button>
       </div>
+      {isAlarmActive && (
+        <div className="mt-4">
+          <button
+            onClick={handleStopAlarm}
+            className="bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Stop Alarm
+          </button>
+        </div>
+      )}
       {isAlarmModalOpen && (
         <AlarmModal
           onClose={() => setIsAlarmModalOpen(false)}
           onSave={handleSetAlarm}
         />
       )}
+      <audio ref={audioRef} src="/alarm.wav" loop />
     </div>
   );
 }

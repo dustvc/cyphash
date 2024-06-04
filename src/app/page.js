@@ -230,7 +230,7 @@ export default function Home() {
         ))}
       </div>
       <footer className="text-center mt-4">
-        <p>Version 1.0.1</p>
+        <p>Version 1.1.0</p>
       </footer>
     </div>
   );
