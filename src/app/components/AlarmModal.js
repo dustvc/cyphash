@@ -2,10 +2,19 @@ import { useState } from "react";
 
 export default function AlarmModal({ onClose, onSave }) {
   const [targetPrice, setTargetPrice] = useState("");
-  const [condition, setCondition] = useState("above");
+  const [conditions, setConditions] = useState({
+    above: false,
+    below: false,
+    exactly: false,
+  });
+
+  const handleConditionChange = (e) => {
+    const { name, checked } = e.target;
+    setConditions((prev) => ({ ...prev, [name]: checked }));
+  };
 
   const handleSave = () => {
-    onSave(targetPrice, condition);
+    onSave(targetPrice, conditions);
   };
 
   return (
@@ -30,15 +39,38 @@ export default function AlarmModal({ onClose, onSave }) {
           <label className="block text-white mb-2">
             Alarm Berbunyi Jika Harga:
           </label>
-          <select
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-            className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-          >
-            <option value="above">Diatas Target</option>
-            <option value="below">Dibawah Target</option>
-            <option value="exactly">Presisi (Menyentuh Angka Target)</option>
-          </select>
+          <div>
+            <label className="text-white mr-2">
+              <input
+                type="checkbox"
+                name="above"
+                checked={conditions.above}
+                onChange={handleConditionChange}
+                className="mr-1"
+              />
+              Diatas Target
+            </label>
+            <label className="text-white mr-2">
+              <input
+                type="checkbox"
+                name="below"
+                checked={conditions.below}
+                onChange={handleConditionChange}
+                className="mr-1"
+              />
+              Dibawah Target
+            </label>
+            <label className="text-white">
+              <input
+                type="checkbox"
+                name="exactly"
+                checked={conditions.exactly}
+                onChange={handleConditionChange}
+                className="mr-1"
+              />
+              Presisi (Menyentuh Angka Target)
+            </label>
+          </div>
         </div>
         <button
           onClick={handleSave}

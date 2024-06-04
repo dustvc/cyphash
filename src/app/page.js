@@ -96,11 +96,11 @@ export default function Home() {
     }
   };
 
-  const handleUpdateTarget = async (id, targetPrice, condition) => {
+  const handleUpdateTarget = async (id, targetPrice, conditions) => {
     const cryptoRef = doc(db, "cryptos", id);
     await updateDoc(cryptoRef, {
       targetPrice: parseFloat(targetPrice),
-      condition: condition,
+      conditions,
     });
 
     const newCryptoData = cryptoData.map((crypto) =>
@@ -108,7 +108,7 @@ export default function Home() {
         ? {
             ...crypto,
             targetPrice: parseFloat(targetPrice),
-            condition: condition,
+            conditions,
           }
         : crypto
     );
