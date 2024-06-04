@@ -27,7 +27,7 @@ export default function AlarmModal({ onClose, onSave }) {
           Close
         </button>
         <div className="mb-4">
-          <label className="block text-white mb-2">Setting Harga Target:</label>
+          <label className="block text-white mb-2">Set Target Price:</label>
           <input
             type="number"
             value={targetPrice}
@@ -36,9 +36,7 @@ export default function AlarmModal({ onClose, onSave }) {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-white mb-2">
-            Alarm Berbunyi Jika Harga:
-          </label>
+          <label className="block text-white mb-2">Alert When Price Is:</label>
           <div>
             <label className="text-white mr-2">
               <input
@@ -48,7 +46,7 @@ export default function AlarmModal({ onClose, onSave }) {
                 onChange={handleConditionChange}
                 className="mr-1"
               />
-              Diatas Target
+              Above Target
             </label>
             <label className="text-white mr-2">
               <input
@@ -58,7 +56,7 @@ export default function AlarmModal({ onClose, onSave }) {
                 onChange={handleConditionChange}
                 className="mr-1"
               />
-              Dibawah Target
+              Below Target
             </label>
             <label className="text-white">
               <input
@@ -68,7 +66,7 @@ export default function AlarmModal({ onClose, onSave }) {
                 onChange={handleConditionChange}
                 className="mr-1"
               />
-              Presisi (Menyentuh Angka Target)
+              Exactly at Target
             </label>
           </div>
         </div>

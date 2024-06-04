@@ -127,6 +127,28 @@ export default function Home() {
     setCryptoData(newCryptoData);
   };
 
+  const handleUpdateAlarms = async (id, alarms) => {
+    const cryptoRef = doc(db, "cryptos", id);
+    await updateDoc(cryptoRef, { alarms });
+
+    const newCryptoData = cryptoData.map((crypto) =>
+      crypto.id === id ? { ...crypto, alarms } : crypto
+    );
+    setCryptoData(newCryptoData);
+  };
+
+  const handleRemoveAlarm = async (id, index) => {
+    const cryptoRef = doc(db, "cryptos", id);
+    const crypto = cryptoData.find((crypto) => crypto.id === id);
+    const newAlarms = crypto.alarms.filter((_, i) => i !== index);
+    await updateDoc(cryptoRef, { alarms: newAlarms });
+
+    const newCryptoData = cryptoData.map((crypto) =>
+      crypto.id === id ? { ...crypto, alarms: newAlarms } : crypto
+    );
+    setCryptoData(newCryptoData);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-900 text-white">
@@ -231,6 +253,8 @@ export default function Home() {
             onRemove={handleRemoveCrypto}
             onUpdateTarget={handleUpdateTarget}
             onRemoveTarget={handleRemoveTarget}
+            onUpdateAlarms={handleUpdateAlarms}
+            onRemoveAlarm={handleRemoveAlarm}
           />
         ))}
       </div>

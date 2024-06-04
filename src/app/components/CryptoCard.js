@@ -4,22 +4,19 @@ import { useState, useEffect, useRef } from "react";
 import { fetchCryptoPrice } from "../lib/indodax";
 import { convertToRupiah } from "../utils/convertToRupiah";
 import AlarmModal from "./AlarmModal";
-import ConfirmModal from "./ConfirmModal"; // Import the new ConfirmModal component
+import ConfirmModal from "./ConfirmModal";
 
 export default function CryptoCard({
   crypto,
   onRemove,
-  onUpdateTarget,
-  onRemoveTarget,
+  onUpdateAlarms,
+  onRemoveAlarm,
 }) {
   const [currentPrice, setCurrentPrice] = useState(null);
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
-  const [isAlarmActive, setIsAlarmActive] = useState(false);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // Add state for the confirm modal
-  const aboveAudioRef = useRef(null);
-  const belowAudioRef = useRef(null);
-  const exactlyAudioRef = useRef(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const audioRefs = useRef([]);
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -28,18 +25,17 @@ export default function CryptoCard({
       const calculatedProfit = price * crypto.numCoins - crypto.investment;
       setProfit(calculatedProfit);
 
-      if (crypto.targetPrice) {
-        const { above, below, exactly } = crypto.conditions || {};
-        if (above && price > crypto.targetPrice) {
-          setIsAlarmActive(true);
-          aboveAudioRef.current.play();
-        } else if (below && price < crypto.targetPrice) {
-          setIsAlarmActive(true);
-          belowAudioRef.current.play();
-        } else if (exactly && price == crypto.targetPrice) {
-          setIsAlarmActive(true);
-          exactlyAudioRef.current.play();
-        }
+      if (crypto.alarms) {
+        crypto.alarms.forEach((alarm, index) => {
+          const { above, below, exactly } = alarm.conditions || {};
+          if (above && price > alarm.targetPrice) {
+            audioRefs.current[index].play();
+          } else if (below && price < alarm.targetPrice) {
+            audioRefs.current[index].play();
+          } else if (exactly && price === alarm.targetPrice) {
+            audioRefs.current[index].play();
+          }
+        });
       }
     };
 
@@ -47,21 +43,18 @@ export default function CryptoCard({
     const interval = setInterval(fetchPrice, 5000);
 
     return () => clearInterval(interval);
-  }, [crypto, onRemoveTarget]);
+  }, [crypto]);
 
-  const handleStopAlarm = () => {
-    setIsAlarmActive(false);
-    aboveAudioRef.current.pause();
-    aboveAudioRef.current.currentTime = 0;
-    belowAudioRef.current.pause();
-    belowAudioRef.current.currentTime = 0;
-    exactlyAudioRef.current.pause();
-    exactlyAudioRef.current.currentTime = 0;
-    onRemoveTarget(crypto.id);
+  const handleStopAlarm = (index) => {
+    audioRefs.current[index].pause();
+    audioRefs.current[index].currentTime = 0;
+    onRemoveAlarm(crypto.id, index);
   };
 
   const handleSetAlarm = (targetPrice, conditions) => {
-    onUpdateTarget(crypto.id, targetPrice, conditions);
+    const newAlarms = crypto.alarms ? [...crypto.alarms] : [];
+    newAlarms.push({ targetPrice: parseFloat(targetPrice), conditions });
+    onUpdateAlarms(crypto.id, newAlarms);
     setIsAlarmModalOpen(false);
   };
 
@@ -98,47 +91,39 @@ export default function CryptoCard({
         </div>
       )}
       <div className="flex flex-col sm:flex-row gap-2 mt-2">
-        {!crypto.targetPrice && (
-          <button
-            onClick={() => setIsAlarmModalOpen(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Tambahkan Alarm
-          </button>
-        )}
-        {crypto.targetPrice && (
-          <div className="text-white px-4 py-2 rounded bg-yellow-500 flex items-center justify-between">
-            <span>
-              Alarm Target: {convertToRupiah(crypto.targetPrice)} (
-              {crypto.conditions?.above && "Diatas "}
-              {crypto.conditions?.below && "Dibawah "}
-              {crypto.conditions?.exactly && "Presisi"} Target)
-            </span>
-            <button
-              onClick={() => onRemoveTarget(crypto.id)}
-              className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
-            >
-              Hapus
-            </button>
-          </div>
-        )}
         <button
-          onClick={() => setIsConfirmModalOpen(true)} // Open confirm modal
+          onClick={() => setIsAlarmModalOpen(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Tambahkan Alarm
+        </button>
+        <button
+          onClick={() => setIsConfirmModalOpen(true)}
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
           Hapus
         </button>
       </div>
-      {isAlarmActive && (
-        <div className="mt-4">
-          <button
-            onClick={handleStopAlarm}
-            className="bg-red-500 text-white px-4 py-2 rounded"
+      {crypto.alarms &&
+        crypto.alarms.map((alarm, index) => (
+          <div
+            key={index}
+            className="text-white px-4 py-2 rounded bg-yellow-500 flex items-center justify-between mt-2"
           >
-            Stop Alarm
-          </button>
-        </div>
-      )}
+            <span>
+              Alarm Target: {convertToRupiah(alarm.targetPrice)} (
+              {alarm.conditions.above && "Diatas "}
+              {alarm.conditions.below && "Dibawah "}
+              {alarm.conditions.exactly && "Presisi "}Target)
+            </span>
+            <button
+              onClick={() => handleStopAlarm(index)}
+              className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+            >
+              Stop Alarm
+            </button>
+          </div>
+        ))}
       {isAlarmModalOpen && (
         <AlarmModal
           onClose={() => setIsAlarmModalOpen(false)}
@@ -151,9 +136,15 @@ export default function CryptoCard({
           onConfirm={handleConfirmRemove}
         />
       )}
-      <audio ref={aboveAudioRef} src="/audio/above.mp3" loop />
-      <audio ref={belowAudioRef} src="/audio/below.mp3" loop />
-      <audio ref={exactlyAudioRef} src="/audio/exactly.mp3" loop />
+      {crypto.alarms &&
+        crypto.alarms.map((_, index) => (
+          <audio
+            key={index}
+            ref={(el) => (audioRefs.current[index] = el)}
+            src={`/audio/alarm1.wav`}
+            loop
+          />
+        ))}
     </div>
   );
 }
