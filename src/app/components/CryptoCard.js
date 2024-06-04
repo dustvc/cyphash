@@ -1,7 +1,10 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import { fetchCryptoPrice } from "../lib/indodax";
 import { convertToRupiah } from "../utils/convertToRupiah";
 import AlarmModal from "./AlarmModal";
+import ConfirmModal from "./ConfirmModal"; // Import the new ConfirmModal component
 
 export default function CryptoCard({
   crypto,
@@ -13,6 +16,7 @@ export default function CryptoCard({
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // Add state for the confirm modal
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -22,7 +26,6 @@ export default function CryptoCard({
       const calculatedProfit = price * crypto.numCoins - crypto.investment;
       setProfit(calculatedProfit);
 
-      // Check if the current price has reached the target price condition
       if (crypto.targetPrice) {
         if (
           (crypto.condition === "above" && price > crypto.targetPrice) ||
@@ -36,7 +39,7 @@ export default function CryptoCard({
     };
 
     fetchPrice();
-    const interval = setInterval(fetchPrice, 5000); // Update every 5 seconds
+    const interval = setInterval(fetchPrice, 5000);
 
     return () => clearInterval(interval);
   }, [crypto, onRemoveTarget]);
@@ -44,13 +47,18 @@ export default function CryptoCard({
   const handleStopAlarm = () => {
     setIsAlarmActive(false);
     audioRef.current.pause();
-    audioRef.current.currentTime = 0; // Reset the audio playback to the beginning
-    onRemoveTarget(crypto.id); // Turn off the alarm
+    audioRef.current.currentTime = 0;
+    onRemoveTarget(crypto.id);
   };
 
   const handleSetAlarm = (targetPrice, condition) => {
     onUpdateTarget(crypto.id, targetPrice, condition);
     setIsAlarmModalOpen(false);
+  };
+
+  const handleConfirmRemove = () => {
+    onRemove(crypto.id);
+    setIsConfirmModalOpen(false);
   };
 
   return (
@@ -106,7 +114,7 @@ export default function CryptoCard({
           </div>
         )}
         <button
-          onClick={() => onRemove(crypto.id)}
+          onClick={() => setIsConfirmModalOpen(true)} // Open confirm modal
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
           Hapus
@@ -126,6 +134,12 @@ export default function CryptoCard({
         <AlarmModal
           onClose={() => setIsAlarmModalOpen(false)}
           onSave={handleSetAlarm}
+        />
+      )}
+      {isConfirmModalOpen && (
+        <ConfirmModal
+          onClose={() => setIsConfirmModalOpen(false)}
+          onConfirm={handleConfirmRemove}
         />
       )}
       <audio ref={audioRef} src="/alarm.wav" loop />
