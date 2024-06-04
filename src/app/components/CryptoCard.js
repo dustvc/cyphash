@@ -22,10 +22,16 @@ export default function CryptoCard({
       const calculatedProfit = price * crypto.numCoins - crypto.investment;
       setProfit(calculatedProfit);
 
-      // Check if the current price has reached the target price
-      if (crypto.targetPrice && price >= crypto.targetPrice) {
-        setIsAlarmActive(true);
-        audioRef.current.play();
+      // Check if the current price has reached the target price condition
+      if (crypto.targetPrice) {
+        if (
+          (crypto.condition === "above" && price > crypto.targetPrice) ||
+          (crypto.condition === "below" && price < crypto.targetPrice) ||
+          (crypto.condition === "exactly" && price === crypto.targetPrice)
+        ) {
+          setIsAlarmActive(true);
+          audioRef.current.play();
+        }
       }
     };
 
@@ -42,8 +48,8 @@ export default function CryptoCard({
     onRemoveTarget(crypto.id); // Turn off the alarm
   };
 
-  const handleSetAlarm = (targetPrice) => {
-    onUpdateTarget(crypto.id, targetPrice);
+  const handleSetAlarm = (targetPrice, condition) => {
+    onUpdateTarget(crypto.id, targetPrice, condition);
     setIsAlarmModalOpen(false);
   };
 
@@ -85,7 +91,12 @@ export default function CryptoCard({
         )}
         {crypto.targetPrice && (
           <div className="text-white px-4 py-2 rounded bg-yellow-500 flex items-center justify-between">
-            <span>Alarm Target: {convertToRupiah(crypto.targetPrice)}</span>
+            <span>
+              Alarm Target: {convertToRupiah(crypto.targetPrice)} (
+              {crypto.condition === "above" && "Diatas"}
+              {crypto.condition === "under" && "Dibawah"}
+              {crypto.condition === "precise" && "Presisi"} Target)
+            </span>
             <button
               onClick={() => onRemoveTarget(crypto.id)}
               className="ml-2 bg-red-500 text-white px-2 py-1 rounded"

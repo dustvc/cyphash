@@ -2,9 +2,10 @@ import { useState } from "react";
 
 export default function AlarmModal({ onClose, onSave }) {
   const [targetPrice, setTargetPrice] = useState("");
+  const [condition, setCondition] = useState("above");
 
   const handleSave = () => {
-    onSave(targetPrice);
+    onSave(targetPrice, condition);
   };
 
   return (
@@ -17,13 +18,27 @@ export default function AlarmModal({ onClose, onSave }) {
           Close
         </button>
         <div className="mb-4">
-          <label className="block text-white mb-2">Set Target Price:</label>
+          <label className="block text-white mb-2">Setting Harga Target:</label>
           <input
             type="number"
             value={targetPrice}
             onChange={(e) => setTargetPrice(e.target.value)}
             className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
           />
+        </div>
+        <div className="mb-4">
+          <label className="block text-white mb-2">
+            Alarm Berbunyi Jika Harga:
+          </label>
+          <select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
+          >
+            <option value="above">Diatas Target</option>
+            <option value="below">Dibawah Target</option>
+            <option value="exactly">Presisi (Menyentuh Angka Target)</option>
+          </select>
         </div>
         <button
           onClick={handleSave}
