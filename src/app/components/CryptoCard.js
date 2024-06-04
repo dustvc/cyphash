@@ -36,7 +36,7 @@ export default function CryptoCard({
         } else if (below && price < crypto.targetPrice) {
           setIsAlarmActive(true);
           belowAudioRef.current.play();
-        } else if (exactly && price === crypto.targetPrice) {
+        } else if (exactly && price == crypto.targetPrice) {
           setIsAlarmActive(true);
           exactlyAudioRef.current.play();
         }
