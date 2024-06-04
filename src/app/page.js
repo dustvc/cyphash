@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { getAuth, signOut } from "firebase/auth";
 import {
   collection,
   addDoc,
@@ -10,42 +10,39 @@ import {
   query,
   where,
   doc,
+  updateDoc,
 } from "firebase/firestore";
-import { db, auth } from "./lib/firebase";
+import { db } from "./lib/firebase";
 import { fetchCryptoPrice } from "./lib/indodax";
-import { useRouter } from "next/navigation";
-
-function convertToRupiah(number) {
-  const formatter = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-  });
-  return formatter.format(number);
-}
+import { useAuth } from "./hooks/useAuth";
+import CryptoCard from "./components/CryptoCard";
+import Modal from "./components/Modal";
+import { convertToRupiah } from "./utils/convertToRupiah";
+import VersionModal from "./components/VersionModal";
 
 export default function Home() {
+  const { user, loading } = useAuth();
   const [cryptoData, setCryptoData] = useState([]);
   const [title, setTitle] = useState("");
   const [code, setCode] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
   const [investment, setInvestment] = useState("");
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter();
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const auth = getAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        fetchData(user.uid);
-        setLoading(false);
-      } else {
-        router.push("/login");
-      }
-    });
-    return () => unsubscribe();
+    const versionModalSeen = localStorage.getItem("versionModalSeen");
+    if (!versionModalSeen) {
+      setIsVersionModalOpen(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchData(user.uid);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (cryptoData.length > 0) {
@@ -97,6 +94,32 @@ export default function Home() {
       const currentPrice = await fetchCryptoPrice(code);
       setBuyPrice(currentPrice);
     }
+  };
+
+  const handleUpdateTarget = async (id, targetPrice) => {
+    const cryptoRef = doc(db, "cryptos", id);
+    await updateDoc(cryptoRef, {
+      targetPrice: parseFloat(targetPrice),
+    });
+
+    const newCryptoData = cryptoData.map((crypto) =>
+      crypto.id === id
+        ? { ...crypto, targetPrice: parseFloat(targetPrice) }
+        : crypto
+    );
+    setCryptoData(newCryptoData);
+  };
+
+  const handleRemoveTarget = async (id) => {
+    const cryptoRef = doc(db, "cryptos", id);
+    await updateDoc(cryptoRef, {
+      targetPrice: null,
+    });
+
+    const newCryptoData = cryptoData.map((crypto) =>
+      crypto.id === id ? { ...crypto, targetPrice: null } : crypto
+    );
+    setCryptoData(newCryptoData);
   };
 
   if (loading) {
@@ -192,90 +215,23 @@ export default function Home() {
           </form>
         </Modal>
       )}
+      {isVersionModalOpen && (
+        <VersionModal onClose={() => setIsVersionModalOpen(false)} />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {cryptoData.map((crypto) => (
           <CryptoCard
             key={crypto.id}
             crypto={crypto}
             onRemove={handleRemoveCrypto}
+            onUpdateTarget={handleUpdateTarget}
+            onRemoveTarget={handleRemoveTarget}
           />
         ))}
       </div>
+      <footer className="text-center mt-4">
+        <p>Version 1.0.1</p>
+      </footer>
     </div>
-  );
-}
-
-function Modal({ children, onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-700 p-4 rounded shadow-lg w-1/3 relative">
-        <button
-          className="absolute top-2 right-2 text-red-500"
-          onClick={onClose}
-        >
-          Close
-        </button>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function CryptoCard({ crypto, onRemove }) {
-  const [currentPrice, setCurrentPrice] = useState(null);
-  const [profit, setProfit] = useState(null);
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const price = await fetchCryptoPrice(crypto.code);
-      setCurrentPrice(price);
-      const calculatedProfit = price * crypto.numCoins - crypto.investment;
-      setProfit(calculatedProfit);
-    };
-    fetchPrice();
-
-    const interval = setInterval(() => {
-      fetchPrice();
-    }, 5000); // Update every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [crypto]);
-
-  return (
-    crypto && (
-      <div className="border p-4 rounded shadow bg-gray-800 text-white">
-        <div className="justify-between flex">
-          <div className="text-lg font-bold">{crypto.title}</div>
-          <div className="text-lg font-regular">
-            ({crypto.code.toUpperCase()})
-          </div>
-        </div>
-        <div className="text-gray-400">Jumlah Koin: {crypto.numCoins}</div>
-        <div className="text-gray-400">
-          Harga Beli: {convertToRupiah(crypto.buyPrice)}
-        </div>
-        {currentPrice && (
-          <div className="text-gray-400">
-            Harga Sekarang: {convertToRupiah(currentPrice)}
-          </div>
-        )}
-        {profit !== null && (
-          <div
-            className={`mt-2 text-white px-4 py-2 rounded ${
-              profit >= 0 ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            {profit >= 0 ? "Profit" : "Loss"}:{" "}
-            {convertToRupiah(profit.toFixed(2))} {profit >= 0 ? "🚀" : "📉"}
-          </div>
-        )}
-        <button
-          onClick={() => onRemove(crypto.id)}
-          className="mt-2 bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Hapus
-        </button>
-      </div>
-    )
   );
 }
