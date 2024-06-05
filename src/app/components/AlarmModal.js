@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AlarmModal({ onClose, onSave }) {
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState("above");
   const [alarmSound, setAlarmSound] = useState("alarm1.wav");
   const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -19,6 +22,15 @@ export default function AlarmModal({ onClose, onSave }) {
       exactly: condition === "exactly",
     };
     onSave(targetPrice, conditions, alarmSound);
+    toast.success("Alarm berhasil disimpan!", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
   };
 
   const handleAlarmSoundChange = (e) => {
@@ -29,27 +41,38 @@ export default function AlarmModal({ onClose, onSave }) {
       audioRef.current.oncanplaythrough = () => {
         audioRef.current
           .play()
+          .then(() => setPlaying(true))
           .catch((error) => console.error("Error playing audio:", error));
       };
     }
   };
 
+  const handlePreview = () => {
+    if (audioRef.current) {
+      audioRef.current
+        .play()
+        .then(() => setPlaying(true))
+        .catch((error) => console.error("Error playing audio:", error));
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-gray-700 p-4 rounded shadow-lg w-full sm:w-2/3 lg:w-1/3 relative">
+      <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-full sm:w-2/3 lg:w-1/3 relative">
         <button
           className="absolute top-2 right-2 text-red-500"
           onClick={onClose}
         >
-          Tutup
+          &times;
         </button>
+        <h2 className="text-xl font-bold text-white mb-4">Atur Alarm</h2>
         <div className="mb-4">
           <label className="block text-white mb-2">Atur Harga Target:</label>
           <input
             type="number"
             value={targetPrice}
             onChange={(e) => setTargetPrice(e.target.value)}
-            className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
+            className="w-full p-2 rounded-md text-black"
           />
         </div>
         <div className="mb-4">
@@ -59,7 +82,7 @@ export default function AlarmModal({ onClose, onSave }) {
           <select
             value={condition}
             onChange={(e) => setCondition(e.target.value)}
-            className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
+            className="w-full p-2 rounded-md text-black"
           >
             <option value="above">Di atas Target</option>
             <option value="below">Di bawah Target</option>
@@ -68,23 +91,33 @@ export default function AlarmModal({ onClose, onSave }) {
         </div>
         <div className="mb-4">
           <label className="block text-white mb-2">Pilih Suara Alarm:</label>
-          <select
-            value={alarmSound}
-            onChange={handleAlarmSoundChange}
-            className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-          >
-            <option value="alarm1.wav">Alarm 1</option>
-            <option value="alarm2.wav">Alarm 2</option>
-            <option value="alarm3.wav">Alarm 3</option>
-          </select>
-          <audio ref={audioRef} />
+          <div className="flex items-center">
+            <select
+              value={alarmSound}
+              onChange={handleAlarmSoundChange}
+              className="w-full p-2 rounded-md text-black"
+            >
+              <option value="alarm1.wav">Alarm 1</option>
+              <option value="alarm2.wav">Alarm 2</option>
+              <option value="alarm3.wav">Alarm 3</option>
+            </select>
+            <button
+              onClick={handlePreview}
+              className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Pratinjau
+            </button>
+            {playing && <span className="ml-2 text-green-500">Memutar...</span>}
+          </div>
+          <audio ref={audioRef} onEnded={() => setPlaying(false)} />
         </div>
         <button
           onClick={handleSave}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="w-full bg-blue-500 text-white px-4 py-2 rounded"
         >
           Simpan
         </button>
+        <ToastContainer />
       </div>
     </div>
   );

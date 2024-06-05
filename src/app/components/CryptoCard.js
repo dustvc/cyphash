@@ -3,7 +3,8 @@ import { fetchCryptoPrice } from "../lib/indodax";
 import { convertToRupiah } from "../utils/convertToRupiah";
 import AlarmModal from "./AlarmModal";
 import ConfirmModal from "./ConfirmModal";
-
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 export default function CryptoCard({
   crypto,
   onRemove,
@@ -14,6 +15,7 @@ export default function CryptoCard({
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [loadingPrice, setLoadingPrice] = useState(true);
   const audioRefs = useRef([]);
 
   useEffect(() => {
@@ -28,13 +30,17 @@ export default function CryptoCard({
           const { above, below, exactly } = alarm.conditions || {};
           if (above && price > alarm.targetPrice) {
             audioRefs.current[index].play();
+            toast.success(`Harga ${crypto.code} di atas target!`);
           } else if (below && price < alarm.targetPrice) {
             audioRefs.current[index].play();
+            toast.warn(`Harga ${crypto.code} di bawah target!`);
           } else if (exactly && price === alarm.targetPrice) {
             audioRefs.current[index].play();
+            toast.info(`Harga ${crypto.code} mencapai target!`);
           }
         });
       }
+      setLoadingPrice(false);
     };
 
     fetchPrice();
@@ -66,7 +72,7 @@ export default function CryptoCard({
   };
 
   return (
-    <div className="border p-4 rounded shadow bg-gray-800 text-white mb-4">
+    <div className="border p-4 rounded-lg shadow-lg bg-gray-800 text-white mb-4">
       <div className="flex justify-between">
         <div className="text-lg font-bold">{crypto.title}</div>
         <div className="text-lg font-regular">
@@ -77,14 +83,18 @@ export default function CryptoCard({
       <div className="text-gray-400">
         Harga Beli: {convertToRupiah(crypto.buyPrice)}
       </div>
-      {currentPrice && (
-        <div className="text-gray-400">
-          Harga Sekarang: {convertToRupiah(currentPrice)}
-        </div>
+      {loadingPrice ? (
+        <div className="text-gray-400">Loading...</div>
+      ) : (
+        currentPrice && (
+          <div className="text-gray-400">
+            Harga Sekarang: {convertToRupiah(currentPrice)}
+          </div>
+        )
       )}
       {profit !== null && (
         <div
-          className={`mt-2 text-white px-4 py-2 rounded ${
+          className={`mt-2 px-4 py-2 rounded ${
             profit >= 0 ? "bg-green-500" : "bg-red-500"
           }`}
         >
@@ -95,13 +105,13 @@ export default function CryptoCard({
       <div className="flex flex-col sm:flex-row gap-2 mt-2">
         <button
           onClick={() => setIsAlarmModalOpen(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           Tambahkan Alarm
         </button>
         <button
           onClick={() => setIsConfirmModalOpen(true)}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
         >
           Hapus
         </button>
@@ -121,7 +131,7 @@ export default function CryptoCard({
             </span>
             <button
               onClick={() => handleStopAlarm(index)}
-              className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+              className="ml-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
             >
               Hentikan Alarm
             </button>
@@ -148,6 +158,7 @@ export default function CryptoCard({
             loop
           />
         ))}
+      <ToastContainer />
     </div>
   );
 }

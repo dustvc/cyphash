@@ -9,20 +9,20 @@ export default function VersionModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-gray-700 p-4 rounded shadow-lg w-full max-w-lg relative">
+      <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-lg relative">
         <button
           className="absolute top-2 right-2 text-red-500"
           onClick={onClose}
         >
-          Close
+          &times;
         </button>
-        <h2 className="text-xl text-white mb-4">Version Update</h2>
+        <h2 className="text-xl font-bold text-white mb-4">Pembaruan Versi</h2>
         <p className="text-white">
-          Update CYPHASH 🐒 v1.1:
+          Pembaruan CYPHASH 🐒 v1.1:
           <ul className="list-disc pl-4">
             <li>Fitur Alarm</li>
             <li>Update UI/UX</li>
-            <li>Fix Bugs</li>
+            <li>Perbaikan Bug</li>
           </ul>
         </p>
       </div>

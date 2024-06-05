@@ -20,14 +20,11 @@ import Modal from "./components/Modal";
 import { convertToRupiah } from "./utils/convertToRupiah";
 import VersionModal from "./components/VersionModal";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import AddCryptoForm from "./components/AddCryptoForm";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const [cryptoData, setCryptoData] = useState([]);
-  const [title, setTitle] = useState("");
-  const [code, setCode] = useState("");
-  const [buyPrice, setBuyPrice] = useState("");
-  const [investment, setInvestment] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const auth = getAuth();
@@ -70,31 +67,17 @@ export default function Home() {
     setCryptoData(data);
   };
 
-  const handleAddCrypto = async (e) => {
-    e.preventDefault();
-    const numCoins = investment / buyPrice;
+  const handleAddCrypto = async (crypto) => {
     await addDoc(collection(db, "cryptos"), {
-      title,
-      code,
-      buyPrice,
-      investment,
-      numCoins,
+      ...crypto,
       uid: user.uid,
     });
     fetchData(user.uid);
-    setIsModalOpen(false); // Close the modal after adding crypto
   };
 
   const handleRemoveCrypto = async (id) => {
     await deleteDoc(doc(db, "cryptos", id));
     fetchData(user.uid);
-  };
-
-  const handleFetchCurrentPrice = async () => {
-    if (code) {
-      const currentPrice = await fetchCryptoPrice(code);
-      setBuyPrice(currentPrice);
-    }
   };
 
   const handleUpdateTarget = async (id, targetPrice, conditions) => {
@@ -188,67 +171,10 @@ export default function Home() {
       </div>
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <form onSubmit={handleAddCrypto}>
-            <label className="block mb-2">
-              Judul:
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Judul"
-                required
-                className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-              />
-            </label>
-            <label className="block mb-2">
-              Kode Crypto:
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Kode Crypto"
-                required
-                className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-              />
-            </label>
-            <label className="block mb-2">
-              Harga Beli:{" "}
-              <button
-                type="button"
-                onClick={handleFetchCurrentPrice}
-                className={`text-white underline font-regular ${
-                  code ? "" : "cursor-not-allowed text-gray-400"
-                }`}
-              >
-                Pakai Harga Sekarang
-              </button>
-              <input
-                type="number"
-                value={buyPrice}
-                onChange={(e) => setBuyPrice(e.target.value)}
-                placeholder="Harga Beli"
-                required
-                className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-              />
-            </label>
-            <label className="block mb-2">
-              Total Investasi:
-              <input
-                type="number"
-                value={investment}
-                onChange={(e) => setInvestment(e.target.value)}
-                placeholder="Total Investasi"
-                required
-                className="border-black rounded-md p-2 mr-2 text-white w-full bg-gray-800"
-              />
-            </label>
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Tambahkan Crypto
-            </button>
-          </form>
+          <AddCryptoForm
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleAddCrypto}
+          />
         </Modal>
       )}
       {isVersionModalOpen && (
