@@ -5,6 +5,7 @@ import AlarmModal from "./AlarmModal";
 import ConfirmModal from "./ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 export default function CryptoCard({
   crypto,
   onRemove,
@@ -16,6 +17,7 @@ export default function CryptoCard({
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [loadingPrice, setLoadingPrice] = useState(true);
+  const [activeAlarms, setActiveAlarms] = useState([]);
   const audioRefs = useRef([]);
 
   useEffect(() => {
@@ -26,19 +28,24 @@ export default function CryptoCard({
       setProfit(calculatedProfit);
 
       if (crypto.alarms) {
+        const activeAlarmsList = [];
         crypto.alarms.forEach((alarm, index) => {
           const { above, below, exactly } = alarm.conditions || {};
           if (above && price > alarm.targetPrice) {
             audioRefs.current[index].play();
             toast.success(`Harga ${crypto.code} di atas target!`);
+            activeAlarmsList.push(index);
           } else if (below && price < alarm.targetPrice) {
             audioRefs.current[index].play();
             toast.warn(`Harga ${crypto.code} di bawah target!`);
+            activeAlarmsList.push(index);
           } else if (exactly && price === alarm.targetPrice) {
             audioRefs.current[index].play();
             toast.info(`Harga ${crypto.code} mencapai target!`);
+            activeAlarmsList.push(index);
           }
         });
+        setActiveAlarms(activeAlarmsList);
       }
       setLoadingPrice(false);
     };
@@ -53,6 +60,9 @@ export default function CryptoCard({
     audioRefs.current[index].pause();
     audioRefs.current[index].currentTime = 0;
     onRemoveAlarm(crypto.id, index);
+    setActiveAlarms((prev) =>
+      prev.filter((alarmIndex) => alarmIndex !== index)
+    );
   };
 
   const handleSetAlarm = (targetPrice, conditions, alarmSound) => {
@@ -120,7 +130,11 @@ export default function CryptoCard({
         crypto.alarms.map((alarm, index) => (
           <div
             key={index}
-            className="text-white px-4 py-2 rounded bg-yellow-500 flex items-center justify-between mt-2"
+            className={`text-white px-4 py-2 rounded ${
+              activeAlarms.includes(index)
+                ? "bg-yellow-700 animate-pulse"
+                : "bg-yellow-500"
+            } flex items-center justify-between mt-2`}
           >
             <span>
               Alarm Target: {convertToRupiah(alarm.targetPrice)} (
