@@ -77,6 +77,7 @@ export default function AddCryptoForm({ onClose, onSave }) {
         </button>
         <input
           type="number"
+          step="any"
           {...register("buyPrice", { required: true })}
           placeholder="Harga Beli"
           className="mt-1 block w-full rounded-md bg-white text-black border border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 px-4 py-2"
@@ -89,6 +90,7 @@ export default function AddCryptoForm({ onClose, onSave }) {
         <label className="block text-white">Total Investasi:</label>
         <input
           type="number"
+          step="any"
           {...register("investment", { required: true })}
           placeholder="Total Investasi"
           className="mt-1 block w-full rounded-md bg-white text-black border border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 px-4 py-2"
@@ -98,7 +100,9 @@ export default function AddCryptoForm({ onClose, onSave }) {
         )}
       </div>
       <div className="text-white">
-        <span>Jumlah Koin: {(watchInvestment / watchBuyPrice).toFixed(4)}</span>
+        <span>
+          Jumlah Koin: {(watchInvestment / watchBuyPrice).toFixed(10)}
+        </span>
       </div>
       <div className="flex justify-between space-x-2">
         <button
