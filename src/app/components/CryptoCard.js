@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useRef } from "react";
 import { fetchCryptoPrice } from "../lib/indodax";
 import { convertToRupiah } from "../utils/convertToRupiah";
@@ -51,9 +49,13 @@ export default function CryptoCard({
     onRemoveAlarm(crypto.id, index);
   };
 
-  const handleSetAlarm = (targetPrice, conditions) => {
+  const handleSetAlarm = (targetPrice, conditions, alarmSound) => {
     const newAlarms = crypto.alarms ? [...crypto.alarms] : [];
-    newAlarms.push({ targetPrice: parseFloat(targetPrice), conditions });
+    newAlarms.push({
+      targetPrice: parseFloat(targetPrice),
+      conditions,
+      alarmSound,
+    });
     onUpdateAlarms(crypto.id, newAlarms);
     setIsAlarmModalOpen(false);
   };
@@ -86,7 +88,7 @@ export default function CryptoCard({
             profit >= 0 ? "bg-green-500" : "bg-red-500"
           }`}
         >
-          {profit >= 0 ? "Profit" : "Loss"}:{" "}
+          {profit >= 0 ? "Profit" : "Rugi"}:{" "}
           {convertToRupiah(profit.toFixed(2))} {profit >= 0 ? "🚀" : "📉"}
         </div>
       )}
@@ -112,15 +114,16 @@ export default function CryptoCard({
           >
             <span>
               Alarm Target: {convertToRupiah(alarm.targetPrice)} (
-              {alarm.conditions.above && "Diatas "}
-              {alarm.conditions.below && "Dibawah "}
-              {alarm.conditions.exactly && "Presisi "}Target)
+              {alarm.conditions.above && "Di atas "}
+              {alarm.conditions.below && "Di bawah "}
+              {alarm.conditions.exactly && "Tepat "}Target) - Suara:{" "}
+              {alarm.alarmSound}
             </span>
             <button
               onClick={() => handleStopAlarm(index)}
               className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
             >
-              Stop Alarm
+              Hentikan Alarm
             </button>
           </div>
         ))}
@@ -137,11 +140,11 @@ export default function CryptoCard({
         />
       )}
       {crypto.alarms &&
-        crypto.alarms.map((_, index) => (
+        crypto.alarms.map((alarm, index) => (
           <audio
             key={index}
             ref={(el) => (audioRefs.current[index] = el)}
-            src={`/audio/alarm1.wav`}
+            src={`/audio/${alarm.alarmSound}`}
             loop
           />
         ))}

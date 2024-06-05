@@ -19,6 +19,7 @@ import CryptoCard from "./components/CryptoCard";
 import Modal from "./components/Modal";
 import { convertToRupiah } from "./utils/convertToRupiah";
 import VersionModal from "./components/VersionModal";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -149,6 +150,14 @@ export default function Home() {
     setCryptoData(newCryptoData);
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(cryptoData);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setCryptoData(items);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-900 text-white">
@@ -245,19 +254,43 @@ export default function Home() {
       {isVersionModalOpen && (
         <VersionModal onClose={() => setIsVersionModalOpen(false)} />
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cryptoData.map((crypto) => (
-          <CryptoCard
-            key={crypto.id}
-            crypto={crypto}
-            onRemove={handleRemoveCrypto}
-            onUpdateTarget={handleUpdateTarget}
-            onRemoveTarget={handleRemoveTarget}
-            onUpdateAlarms={handleUpdateAlarms}
-            onRemoveAlarm={handleRemoveAlarm}
-          />
-        ))}
-      </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="cryptoCards">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {cryptoData.map((crypto, index) => (
+                <Draggable
+                  key={crypto.id}
+                  draggableId={crypto.id}
+                  index={index}
+                >
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      <CryptoCard
+                        crypto={crypto}
+                        onRemove={handleRemoveCrypto}
+                        onUpdateTarget={handleUpdateTarget}
+                        onRemoveTarget={handleRemoveTarget}
+                        onUpdateAlarms={handleUpdateAlarms}
+                        onRemoveAlarm={handleRemoveAlarm}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
       <footer className="text-center mt-4">
         <p>Version 1.1.0</p>
       </footer>
