@@ -5,6 +5,8 @@ import AlarmModal from "./AlarmModal";
 import ConfirmModal from "./ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CryptoChart from "./CryptoChart";
+import NotificationSettings from "./NotificationSettings";
 
 export default function CryptoCard({
   crypto,
@@ -13,6 +15,8 @@ export default function CryptoCard({
   onRemoveAlarm,
 }) {
   const [currentPrice, setCurrentPrice] = useState(null);
+  const [buyVolume, setBuyVolume] = useState(null);
+  const [sellVolume, setSellVolume] = useState(null);
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -22,26 +26,41 @@ export default function CryptoCard({
 
   useEffect(() => {
     const fetchPrice = async () => {
-      const price = await fetchCryptoPrice(crypto.code);
-      setCurrentPrice(price);
-      const calculatedProfit = price * crypto.numCoins - crypto.investment;
+      const { currentPrice, buyVolume, sellVolume } = await fetchCryptoPrice(
+        crypto.code
+      );
+      setCurrentPrice(currentPrice);
+      setBuyVolume(buyVolume);
+      setSellVolume(sellVolume);
+      const calculatedProfit =
+        currentPrice * crypto.numCoins - crypto.investment;
       setProfit(calculatedProfit);
 
       if (crypto.alarms) {
         const activeAlarmsList = [];
         crypto.alarms.forEach((alarm, index) => {
           const { above, below, exactly } = alarm.conditions || {};
-          if (above && price > alarm.targetPrice) {
+          let alarmTriggered = false;
+          if (alarm.type === "price") {
+            alarmTriggered =
+              (above && currentPrice > alarm.targetValue) ||
+              (below && currentPrice < alarm.targetValue) ||
+              (exactly && currentPrice === alarm.targetValue);
+          } else if (alarm.type === "buyVolume") {
+            alarmTriggered =
+              (above && buyVolume > alarm.targetValue) ||
+              (below && buyVolume < alarm.targetValue) ||
+              (exactly && buyVolume === alarm.targetValue);
+          } else if (alarm.type === "sellVolume") {
+            alarmTriggered =
+              (above && sellVolume > alarm.targetValue) ||
+              (below && sellVolume < alarm.targetValue) ||
+              (exactly && sellVolume === alarm.targetValue);
+          }
+
+          if (alarmTriggered) {
             audioRefs.current[index].play();
-            toast.success(`Harga ${crypto.code} di atas target!`);
-            activeAlarmsList.push(index);
-          } else if (below && price < alarm.targetPrice) {
-            audioRefs.current[index].play();
-            toast.warn(`Harga ${crypto.code} di bawah target!`);
-            activeAlarmsList.push(index);
-          } else if (exactly && price === alarm.targetPrice) {
-            audioRefs.current[index].play();
-            toast.info(`Harga ${crypto.code} mencapai target!`);
+            toast.info(`Alarm ${crypto.code} (${alarm.type}) tercapai!`);
             activeAlarmsList.push(index);
           }
         });
@@ -65,12 +84,13 @@ export default function CryptoCard({
     );
   };
 
-  const handleSetAlarm = (targetPrice, conditions, alarmSound) => {
+  const handleSetAlarm = (targetValue, conditions, alarmSound, alarmType) => {
     const newAlarms = crypto.alarms ? [...crypto.alarms] : [];
     newAlarms.push({
-      targetPrice: parseFloat(targetPrice),
+      targetValue: parseFloat(targetValue),
       conditions,
       alarmSound,
+      type: alarmType,
     });
     onUpdateAlarms(crypto.id, newAlarms);
     setIsAlarmModalOpen(false);
@@ -89,6 +109,7 @@ export default function CryptoCard({
           ({crypto.code.toUpperCase()})
         </div>
       </div>
+
       <div className="text-gray-400">Jumlah Koin: {crypto.numCoins}</div>
       <div className="text-gray-400">
         Harga Beli: {convertToRupiah(crypto.buyPrice)}
@@ -101,6 +122,16 @@ export default function CryptoCard({
             Harga Sekarang: {convertToRupiah(currentPrice)}
           </div>
         )
+      )}
+      {buyVolume && (
+        <div className="text-gray-400">
+          Volume Beli: {convertToRupiah(buyVolume)}
+        </div>
+      )}
+      {sellVolume && (
+        <div className="text-gray-400">
+          Volume Jual: {convertToRupiah(sellVolume)}
+        </div>
       )}
       {profit !== null && (
         <div
@@ -137,7 +168,13 @@ export default function CryptoCard({
             } flex items-center justify-between mt-2`}
           >
             <span>
-              Alarm Target: {convertToRupiah(alarm.targetPrice)} (
+              Alarm{" "}
+              {alarm.type === "price"
+                ? "Harga"
+                : alarm.type === "buyVolume"
+                ? "Volume Beli"
+                : "Volume Jual"}
+              : {convertToRupiah(alarm.targetValue)} (
               {alarm.conditions.above && "Di atas "}
               {alarm.conditions.below && "Di bawah "}
               {alarm.conditions.exactly && "Tepat "}Target) - Suara:{" "}

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { getAuth, signOut } from "firebase/auth";
 import {
@@ -148,6 +147,17 @@ export default function Home() {
       </div>
     );
   }
+
+  // Calculate total investment, current value, and loss
+  const totalInvestment = cryptoData.reduce(
+    (sum, crypto) => sum + (crypto.investment || 0),
+    0
+  );
+  const currentValue = cryptoData.reduce(
+    (sum, crypto) => sum + (crypto.currentPrice * crypto.numCoins || 0),
+    0
+  );
+  const loss = totalInvestment - currentValue;
 
   return (
     <div className="p-4 bg-gray-900 text-white min-h-screen">

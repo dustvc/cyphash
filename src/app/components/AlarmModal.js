@@ -3,9 +3,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function AlarmModal({ onClose, onSave }) {
-  const [targetPrice, setTargetPrice] = useState("");
+  const [targetValue, setTargetValue] = useState("");
   const [condition, setCondition] = useState("above");
   const [alarmSound, setAlarmSound] = useState("alarm1.wav");
+  const [alarmType, setAlarmType] = useState("price");
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(false);
 
@@ -21,7 +22,7 @@ export default function AlarmModal({ onClose, onSave }) {
       below: condition === "below",
       exactly: condition === "exactly",
     };
-    onSave(targetPrice, conditions, alarmSound);
+    onSave(targetValue, conditions, alarmSound, alarmType);
     toast.success("Alarm berhasil disimpan!", {
       position: "top-right",
       autoClose: 3000,
@@ -67,17 +68,29 @@ export default function AlarmModal({ onClose, onSave }) {
         </button>
         <h2 className="text-xl font-bold text-white mb-4">Atur Alarm</h2>
         <div className="mb-4">
-          <label className="block text-white mb-2">Atur Harga Target:</label>
+          <label className="block text-white mb-2">Jenis Alarm:</label>
+          <select
+            value={alarmType}
+            onChange={(e) => setAlarmType(e.target.value)}
+            className="w-full p-2 rounded-md text-black"
+          >
+            <option value="price">Harga</option>
+            <option value="buyVolume">Volume Beli</option>
+            <option value="sellVolume">Volume Jual</option>
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="block text-white mb-2">Atur Target:</label>
           <input
             type="number"
-            value={targetPrice}
-            onChange={(e) => setTargetPrice(e.target.value)}
+            value={targetValue}
+            onChange={(e) => setTargetValue(e.target.value)}
             className="w-full p-2 rounded-md text-black"
           />
         </div>
         <div className="mb-4">
           <label className="block text-white mb-2">
-            Beritahu Ketika Harga:
+            Beritahu Ketika Target:
           </label>
           <select
             value={condition}
