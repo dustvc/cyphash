@@ -19,8 +19,8 @@ export default function AddCryptoForm({ onClose, onSave }) {
   const handleFetchCurrentPrice = async () => {
     if (watchCode) {
       setLoadingPrice(true);
-      const currentPrice = await fetchCryptoPrice(watchCode);
-      setValue("buyPrice", currentPrice);
+      const priceInfo = await fetchCryptoPrice(watchCode);
+      setValue("buyPrice", priceInfo.currentPrice);
       setLoadingPrice(false);
     }
   };

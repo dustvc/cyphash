@@ -10,8 +10,8 @@ export async function fetchCryptoPrice(ticker) {
   const data = await response.json();
   return {
     currentPrice: data.ticker.last,
-    buyVolume: data.ticker.vol_idr,
-    sellVolume: data.ticker.vol_btc,
+    coinVolume: data.ticker["vol_" + ticker_format],
+    idrVolume: data.ticker.vol_idr,
   };
 }
 

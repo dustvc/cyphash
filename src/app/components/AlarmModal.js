@@ -75,8 +75,8 @@ export default function AlarmModal({ onClose, onSave }) {
             className="w-full p-2 rounded-md text-black"
           >
             <option value="price">Harga</option>
-            <option value="buyVolume">Volume Beli</option>
-            <option value="sellVolume">Volume Jual</option>
+            <option value="coinVolume">Volume Koin</option>
+            <option value="idrVolume">Volume Rupiah</option>
           </select>
         </div>
         <div className="mb-4">

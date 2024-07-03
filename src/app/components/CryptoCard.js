@@ -15,8 +15,8 @@ export default function CryptoCard({
   onRemoveAlarm,
 }) {
   const [currentPrice, setCurrentPrice] = useState(null);
-  const [buyVolume, setBuyVolume] = useState(null);
-  const [sellVolume, setSellVolume] = useState(null);
+  const [coinVolume, setCoinVolume] = useState(null);
+  const [idrVolume, setIdrVolume] = useState(null);
   const [profit, setProfit] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -26,12 +26,12 @@ export default function CryptoCard({
 
   useEffect(() => {
     const fetchPrice = async () => {
-      const { currentPrice, buyVolume, sellVolume } = await fetchCryptoPrice(
+      const { currentPrice, coinVolume, idrVolume } = await fetchCryptoPrice(
         crypto.code
       );
       setCurrentPrice(currentPrice);
-      setBuyVolume(buyVolume);
-      setSellVolume(sellVolume);
+      setCoinVolume(coinVolume);
+      setIdrVolume(idrVolume);
       const calculatedProfit =
         currentPrice * crypto.numCoins - crypto.investment;
       setProfit(calculatedProfit);
@@ -46,16 +46,16 @@ export default function CryptoCard({
               (above && currentPrice > alarm.targetValue) ||
               (below && currentPrice < alarm.targetValue) ||
               (exactly && currentPrice === alarm.targetValue);
-          } else if (alarm.type === "buyVolume") {
+          } else if (alarm.type === "coinVolume") {
             alarmTriggered =
-              (above && buyVolume > alarm.targetValue) ||
-              (below && buyVolume < alarm.targetValue) ||
-              (exactly && buyVolume === alarm.targetValue);
-          } else if (alarm.type === "sellVolume") {
+              (above && coinVolume > alarm.targetValue) ||
+              (below && coinVolume < alarm.targetValue) ||
+              (exactly && coinVolume === alarm.targetValue);
+          } else if (alarm.type === "idrVolume") {
             alarmTriggered =
-              (above && sellVolume > alarm.targetValue) ||
-              (below && sellVolume < alarm.targetValue) ||
-              (exactly && sellVolume === alarm.targetValue);
+              (above && idrVolume > alarm.targetValue) ||
+              (below && idrVolume < alarm.targetValue) ||
+              (exactly && idrVolume === alarm.targetValue);
           }
 
           if (alarmTriggered) {
@@ -123,14 +123,14 @@ export default function CryptoCard({
           </div>
         )
       )}
-      {buyVolume && (
+      {coinVolume && (
         <div className="text-gray-400">
-          Volume Beli: {convertToRupiah(buyVolume)}
+          Volume Koin: {convertToRupiah(coinVolume)}
         </div>
       )}
-      {sellVolume && (
+      {idrVolume && (
         <div className="text-gray-400">
-          Volume Jual: {convertToRupiah(sellVolume)}
+          Volume Rupiah: {convertToRupiah(idrVolume)}
         </div>
       )}
       {profit !== null && (
@@ -171,9 +171,9 @@ export default function CryptoCard({
               Alarm{" "}
               {alarm.type === "price"
                 ? "Harga"
-                : alarm.type === "buyVolume"
-                ? "Volume Beli"
-                : "Volume Jual"}
+                : alarm.type === "coinVolume"
+                ? "Volume Koin"
+                : "Volume Rupiah"}
               : {convertToRupiah(alarm.targetValue)} (
               {alarm.conditions.above && "Di atas "}
               {alarm.conditions.below && "Di bawah "}
